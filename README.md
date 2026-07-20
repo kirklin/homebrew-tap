@@ -8,12 +8,22 @@ Homebrew tap for [Kirk Lin](https://github.com/kirklin)'s apps.
 brew install --cask kirklin/tap/magpie
 ```
 
-Or add the tap first, then install by name:
+Using the fully-qualified `user/tap/cask` name trusts just this cask, so it
+works out of the box — no extra steps.
+
+<details>
+<summary>Prefer the short name?</summary>
+
+Homebrew 6.0+ requires trusting non-official taps before loading them by short
+name, so add a `brew trust` step:
 
 ```bash
 brew tap kirklin/tap
+brew trust --cask kirklin/tap/magpie   # or `brew trust kirklin/tap` for the whole tap
 brew install --cask magpie
 ```
+
+</details>
 
 ## Available casks
 
