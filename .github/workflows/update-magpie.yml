@@ -1,0 +1,66 @@
+name: Update magpie cask
+
+# Keeps Casks/magpie.rb in sync with the latest magpie release.
+#
+# Runs entirely inside this tap repo, so it pushes with the built-in
+# GITHUB_TOKEN — no personal access token or cross-repo secret required.
+# Reading kirklin/magpie's releases needs no auth because that repo is public.
+#
+# Adding another app later = copy this file, change SOURCE_REPO / CASK / asset
+# names. Still zero secrets to manage.
+
+on:
+  workflow_dispatch: {} # manual: click "Run workflow" right after you release
+  schedule:
+    - cron: "0 */6 * * *" # safety net: auto-catch new releases within ~6h
+
+permissions:
+  contents: write # lets the built-in token push to this repo
+
+concurrency:
+  group: update-magpie
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      SOURCE_REPO: kirklin/magpie
+      CASK: Casks/magpie.rb
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Sync cask to latest release
+        run: |
+          set -euo pipefail
+
+          TAG=$(gh release view --repo "$SOURCE_REPO" --json tagName --jq .tagName)
+          VERSION="${TAG#v}"
+          CURRENT=$(grep -E '^  version "' "$CASK" | sed -E 's/.*"(.*)".*/\1/')
+
+          echo "latest=$VERSION current=$CURRENT"
+          if [ "$VERSION" = "$CURRENT" ]; then
+            echo "Cask already at $VERSION — nothing to do."
+            exit 0
+          fi
+
+          gh release download "$TAG" --repo "$SOURCE_REPO" --pattern '*.dmg' --dir dmg
+          ARM_SHA=$(sha256sum "dmg/Magpie_${VERSION}_aarch64.dmg" | awk '{print $1}')
+          INTEL_SHA=$(sha256sum "dmg/Magpie_${VERSION}_x64.dmg" | awk '{print $1}')
+
+          sed -i -E "s/^  version \".*\"/  version \"${VERSION}\"/" "$CASK"
+          sed -i -E "s/(arm:[[:space:]]+)\"[0-9a-f]{64}\"/\1\"${ARM_SHA}\"/" "$CASK"
+          sed -i -E "s/(intel:[[:space:]]+)\"[0-9a-f]{64}\"/\1\"${INTEL_SHA}\"/" "$CASK"
+          rm -rf dmg
+
+          if git diff --quiet; then
+            echo "No cask changes after edit — skipping commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$CASK"
+          git commit -m "magpie ${VERSION}"
+          git push
