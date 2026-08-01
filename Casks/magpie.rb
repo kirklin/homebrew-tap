@@ -1,9 +1,9 @@
 cask "magpie" do
   arch arm: "aarch64", intel: "x64"
 
-  version "0.6.2"
-  sha256 arm:   "b8acaff7543344e5546834f9f4632317a9147e06d45af683f9c2f81b8bbe3b42",
-         intel: "23edb92155283e0465e128f35c84a76d45802fc6f6a415e5df3ed888ff03120f"
+  version "0.6.5"
+  sha256 arm:   "5a91081a441dd41b27d475c3e49bfb4da904fcbaca42155b6ea20a1784b86607",
+         intel: "6c7ec6a2af95e388c79d9c62314294e02c1cf7277e9c8594fdc5166c21686a6a"
 
   url "https://github.com/kirklin/magpie/releases/download/v#{version}/Magpie_#{version}_#{arch}.dmg"
   name "Magpie"
