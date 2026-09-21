@@ -17,10 +17,10 @@ cask "magpie" do
   # "Magpie is damaged and can't be opened". Strip it after install so a plain
   # `brew install --cask magpie` just works. Remove this block once the release
   # pipeline signs + notarizes the build.
-  postflight do
-    system_command "/usr/bin/xattr",
-                   args: ["-r", "-d", "com.apple.quarantine", "#{appdir}/Magpie.app"],
-                   sudo: false
+  postflight_steps do
+    run "/usr/bin/xattr",
+        args:           ["-r", "-d", "com.apple.quarantine", "{{appdir}}/Magpie.app"],
+        writable_paths: "{{appdir}}/Magpie.app"
   end
 
   zap trash: [
